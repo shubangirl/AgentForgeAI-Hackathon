@@ -1,0 +1,84 @@
+from flask import Flask, request, jsonify
+from flask_cors import CORS
+import requests
+import json
+
+app = Flask(__name__)
+CORS(app)
+
+KIMI_API_KEY = "api-key"
+BRIGHT_DATA_API_KEY = "api-key"
+
+def search_web(query):
+    url = "https://api.brightdata.com/serp/req"
+    headers = {
+        "Authorization": f"Bearer {BRIGHT_DATA_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "zone": "serp_api1",
+        "query": query,
+        "search_engine": "google",
+        "country": "us",
+        "format": "json"
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    print("Bright Data status:", response.status_code)
+    print("Bright Data response:", response.text[:500])
+
+    if response.status_code != 200:
+        # fallback: return the query itself so Kimi can still reason
+        return [f"Could not fetch live results for: {query}"]
+    return response.json()
+
+def check_claim_with_kimi(claim, web_results):
+    url = "https://api.moonshot.cn/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {KIMI_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    prompt = f"""
+You are a fact-checking assistant. Given a claim and some context, determine if the claim is still accurate.
+
+Claim: {claim}
+
+Context:
+{json.dumps(web_results, indent=2)[:3000]}
+
+Respond ONLY with a JSON object, no markdown, no extra text:
+{{"verdict": "true", "explanation": "one sentence explanation"}}
+
+verdict must be exactly one of: true, outdated, false
+"""
+    payload = {
+        "model": "moonshot-v1-8k",
+        "messages": [{"role": "user", "content": prompt}],
+        "temperature": 0.3
+    }
+    response = requests.post(url, headers=headers, json=payload)
+    result = response.json()
+    print("Kimi response:", json.dumps(result, indent=2)[:500])
+    
+    if "choices" not in result:
+        return {"verdict": "false", "explanation": f"Kimi error: {result}"}
+    
+    content = result["choices"][0]["message"]["content"]
+    content = content.replace("```json", "").replace("```", "").strip()
+    return json.loads(content)
+
+@app.route("/check", methods=["POST"])
+def check():
+    data = request.json
+    claim = data.get("claim", "")
+    if not claim:
+        return jsonify({"error": "No claim provided"}), 400
+    web_results = search_web(claim)
+    verdict = check_claim_with_kimi(claim, web_results)
+    return jsonify({
+        "claim": claim,
+        "verdict": verdict["verdict"],
+        "explanation": verdict["explanation"]
+    })
+
+if __name__ == "__main__":
+    app.run(port=5000, debug=True)
