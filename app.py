@@ -1,13 +1,16 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from dotenv import load_dotenv
 import requests
 import json
+import os
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
 
-SENSENOVA_API_KEY = ""
-BRIGHT_DATA_API_KEY = ""
+SENSENOVA_API_KEY = os.getenv("SENSENOVA_API_KEY")
+BRIGHT_DATA_API_KEY = os.getenv("BRIGHT_DATA_API_KEY")
 
 def search_web(query):
     url = "https://api.brightdata.com/serp/req"
