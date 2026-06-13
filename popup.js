@@ -48,12 +48,22 @@ function displayResults(claims) {
   const list = document.getElementById("resultsList");
   list.innerHTML = "";
   claims.forEach(item => {
+    const sourcesHTML = item.sources && item.sources.length > 0
+      ? `<div class="sources">
+          <div class="sources-label">Sources</div>
+          ${item.sources.map(s => `
+            <a href="${s.url}" target="_blank" class="source-link">${s.title}</a>
+          `).join("")}
+        </div>`
+      : "";
+
     const card = document.createElement("div");
     card.className = `claim-card ${item.verdict}`;
     card.innerHTML = `
       <div class="claim-text">${item.claim}</div>
       <div class="verdict">${verdictLabel(item.verdict)}</div>
       <div class="explanation">${item.explanation}</div>
+      ${sourcesHTML}
     `;
     list.appendChild(card);
   });

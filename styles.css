@@ -229,3 +229,36 @@ h2 {
   line-height: 1.5;
   font-weight: 600;
 }
+
+.sources {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.sources-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--label);
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.source-link {
+  display: block;
+  font-size: 11px;
+  color: #ff9a6c;
+  text-decoration: none;
+  font-weight: 700;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.15s;
+}
+
+.source-link:hover {
+  color: #ff6b8a;
+  text-decoration: underline;
+}

@@ -7,7 +7,7 @@ import os
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}}, supports_credentials=False)
 
 SENSENOVA_API_KEY = os.getenv("SENSENOVA_API_KEY")
 BRIGHT_DATA_API_KEY = os.getenv("BRIGHT_DATA_API_KEY")
@@ -40,24 +40,33 @@ def check_claim_with_sensenova(claim, web_results):
         "Content-Type": "application/json"
     }
     prompt = f"""
-You are a fact-checking assistant. Given a claim and some context, determine if the claim is still accurate.
+You are a fact-checking assistant. Given a claim and web search results, determine if the claim is still accurate.
 
 Claim: {claim}
 
-Context:
+Web search results:
 {json.dumps(web_results, indent=2)[:3000]}
 
 Respond ONLY with a JSON object, no markdown, no extra text:
-{{"verdict": "true", "explanation": "one sentence explanation"}}
+{{
+  "verdict": "true",
+  "explanation": "one sentence explanation",
+  "sources": [
+    {{"title": "Source Name", "url": "https://example.com"}}
+  ]
+}}
 
-verdict must be exactly one of: true, outdated, false, unverifiable
-
-Use "unverifiable" if the claim is too vague, nonsensical, or not fact-checkable (e.g. greetings, opinions, gibberish).
+Rules:
+- verdict must be exactly one of: true, outdated, false, unverifiable
+- Use "unverifiable" if the claim is too vague, nonsensical, or not fact-checkable
+- sources must be real URLs from the web search results above
+- include 1-3 sources max
+- if no sources available use empty array: "sources": []
 """
     payload = {
         "model": "sensenova-6.7-flash-lite",
         "messages": [
-            {"role": "system", "content": "You are a precise fact-checking assistant."},
+            {"role": "system", "content": "You are a precise fact-checking assistant. Always return valid JSON only."},
             {"role": "user", "content": prompt}
         ],
         "temperature": 0.3
@@ -67,11 +76,14 @@ Use "unverifiable" if the claim is too vague, nonsensical, or not fact-checkable
     print("SenseNova response:", json.dumps(result, indent=2)[:500])
 
     if "choices" not in result:
-        return {"verdict": "false", "explanation": f"SenseNova error: {result}"}
+        return {"verdict": "false", "explanation": f"SenseNova error: {result}", "sources": []}
 
     content = result["choices"][0]["message"]["content"]
     content = content.replace("```json", "").replace("```", "").strip()
-    return json.loads(content)
+    parsed = json.loads(content)
+    if "sources" not in parsed:
+        parsed["sources"] = []
+    return parsed
 
 @app.route("/check", methods=["POST"])
 def check():
@@ -84,7 +96,8 @@ def check():
     return jsonify({
         "claim": claim,
         "verdict": verdict["verdict"],
-        "explanation": verdict["explanation"]
+        "explanation": verdict["explanation"],
+        "sources": verdict.get("sources", [])
     })
 
 if __name__ == "__main__":
