@@ -65,8 +65,8 @@ button:hover {
 .claim-card {
   background: #1e1e1e;
   border-radius: 8px;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 14px;
+  margin-bottom: 12px;
   border-left: 4px solid #555;
 }
 
@@ -74,6 +74,58 @@ button:hover {
 .claim-card.outdated { border-left-color: #f59e0b; }
 .claim-card.false { border-left-color: #ef4444; }
 
-.claim-text { font-size: 13px; margin-bottom: 6px; }
-.verdict { font-size: 12px; font-weight: bold; }
-.explanation { font-size: 12px; color: #aaa; margin-top: 4px; }
+.claim-text { 
+  font-size: 13px; 
+  margin-bottom: 8px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+.verdict { 
+  font-size: 12px; 
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+.explanation { 
+  font-size: 12px; 
+  color: #c0c0c0; 
+  margin-top: 8px;
+  line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+
+.sources {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #333;
+}
+
+.sources-label {
+  font-size: 11px;
+  font-weight: bold;
+  color: #888;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sources-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.source-link {
+  font-size: 11px;
+  color: #4f46e5;
+  text-decoration: none;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.source-link:hover {
+  color: #7c3aed;
+  text-decoration: underline;
+}
